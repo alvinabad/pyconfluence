@@ -22,6 +22,11 @@ class ConfluenceXmlRpcHandler():
         else:
             self._server_confluence = self._server.confluence2
 
+        log.debug(self._server_confluence.__dict__)
+
+        if username and password:
+            self.login()
+
     def login(self, username=None, password=None):
         """
         Logs in user. If successful, returns user token.
@@ -32,8 +37,30 @@ class ConfluenceXmlRpcHandler():
         if password is not None:
             self._password = password
 
+        log.debug("Log in: %s" % self._username)
         try:
             self._token = self._server_confluence.login(self._username, self._password)
         except xmlrpclib.Fault as e:
             raise RemoteException(e)
 
+        log.debug("Token: %s" % self._token)
+        return self._token
+
+    def logout(self, token=None):
+        if token is None:
+            token = self._token
+
+        log.debug("Logout token: %s" % token)
+        try:
+            status = self._server_confluence.logout(token)
+        except xmlrpclib.Fault as e:
+            raise RemoteException(e)
+
+        if status and token == self._token:
+            self._token = None
+
+        log.debug("Logout status: %s" % status)
+        return status
+
+    def getToken(self):
+        return self._token
